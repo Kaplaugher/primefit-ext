@@ -6,8 +6,6 @@ import {
   UserButton
 } from "@clerk/chrome-extension"
 
-import { CountButton } from "~features/count-button"
-
 import "~style.css"
 
 const PUBLISHABLE_KEY = process.env.PLASMO_PUBLIC_CLERK_PUBLISHABLE_KEY
@@ -47,15 +45,28 @@ function IndexPopup() {
       // Log the URL
       console.log("Current URL:", result[0].result)
 
-      // Here you would send the full data to your API
-      // Example:
-      // await fetch('your-api-endpoint', {
-      //   method: 'POST',
-      //   headers: { 'Content-Type': 'application/json' },
-      //   body: JSON.stringify({ url: result[0].result })
-      // });
+      // Send the URL to the scraper API
+      try {
+        const response = await fetch("http://localhost:3000/api/scraper", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ url: result[0].result })
+        })
 
-      alert(`Page captured: ${result[0].result}`)
+        if (response.ok) {
+          const data = await response.json()
+          console.log("API response:", data)
+          alert(`Successfully sent URL to scraper API: ${result[0].result}`)
+        } else {
+          console.error("API error:", response.status, response.statusText)
+          alert(
+            `Error sending URL to scraper API: ${response.status} ${response.statusText}`
+          )
+        }
+      } catch (error) {
+        console.error("Error sending URL to scraper API:", error)
+        alert(`Error sending URL to scraper API: ${error.message}`)
+      }
     } catch (error) {
       console.error("Error capturing page content:", error)
     }
