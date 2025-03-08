@@ -37,35 +37,59 @@ function IndexPopup() {
       const result = await chrome.scripting.executeScript({
         target: { tabId: tab.id },
         func: () => {
-          // Get the current URL
-          return window.location.href
+          // Get the full HTML content using XMLSerializer
+          const serializer = new XMLSerializer()
+          const htmlContent = serializer.serializeToString(document)
+
+          return {
+            url: window.location.href,
+            title: document.title,
+            html: htmlContent
+          }
         }
       })
 
-      // Log the URL
-      console.log("Current URL:", result[0].result)
+      // Access the result data
+      const pageData = result[0].result
 
-      // Send the URL to the scraper API
+      // Log the URL and title
+      console.log("Page URL:", pageData.url)
+      console.log("Page Title:", pageData.title)
+
+      // Log the full HTML content
+      console.log("Full HTML Content:", pageData.html)
+
+      // Send the data to the API
       try {
-        const response = await fetch("http://localhost:3000/api/scraper", {
+        const apiResponse = await fetch("http://localhost:3000/api/scraper", {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ url: result[0].result })
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({
+            url: pageData.url,
+            title: pageData.title,
+            html: pageData.html
+          })
         })
 
-        if (response.ok) {
-          const data = await response.json()
-          console.log("API response:", data)
-          alert(`Successfully sent URL to scraper API: ${result[0].result}`)
+        if (apiResponse.ok) {
+          const responseData = await apiResponse.json()
+          console.log("API Response:", responseData)
+          alert(`Successfully sent page content to API: ${pageData.title}`)
         } else {
-          console.error("API error:", response.status, response.statusText)
+          console.error(
+            "API Error:",
+            apiResponse.status,
+            apiResponse.statusText
+          )
           alert(
-            `Error sending URL to scraper API: ${response.status} ${response.statusText}`
+            `Error sending to API: ${apiResponse.status} ${apiResponse.statusText}`
           )
         }
-      } catch (error) {
-        console.error("Error sending URL to scraper API:", error)
-        alert(`Error sending URL to scraper API: ${error.message}`)
+      } catch (apiError) {
+        console.error("API Request Error:", apiError)
+        alert(`Error sending to API: ${apiError.message}`)
       }
     } catch (error) {
       console.error("Error capturing page content:", error)
