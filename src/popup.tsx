@@ -5,6 +5,7 @@ import {
   SignInButton,
   UserButton
 } from "@clerk/chrome-extension"
+import { useState } from "react"
 
 import "~style.css"
 
@@ -25,8 +26,11 @@ if (!PUBLISHABLE_KEY) {
 }
 
 function IndexPopup() {
+  const [isLoading, setIsLoading] = useState(false)
+
   const capturePageContent = async () => {
     try {
+      setIsLoading(true)
       // Get the active tab
       const [tab] = await chrome.tabs.query({
         active: true,
@@ -93,6 +97,8 @@ function IndexPopup() {
       }
     } catch (error) {
       console.error("Error capturing page content:", error)
+    } finally {
+      setIsLoading(false)
     }
   }
 
@@ -121,8 +127,9 @@ function IndexPopup() {
               <UserButton />
               <button
                 onClick={capturePageContent}
-                className="plasmo-bg-blue-500 plasmo-text-white plasmo-px-4 plasmo-py-2 plasmo-rounded plasmo-hover:plasmo-bg-blue-600 plasmo-transition-colors">
-                Add
+                disabled={isLoading}
+                className="plasmo-bg-blue-500 plasmo-text-white plasmo-px-4 plasmo-py-2 plasmo-rounded plasmo-hover:plasmo-bg-blue-600 plasmo-transition-colors plasmo-disabled:plasmo-opacity-50 plasmo-disabled:plasmo-cursor-not-allowed">
+                {isLoading ? "Adding..." : "Add"}
               </button>
             </div>
           </SignedIn>
